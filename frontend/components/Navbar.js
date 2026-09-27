@@ -57,7 +57,7 @@ export default function Navbar() {
 
   const dashboardHref = {
     BUYER: "/dashboard",
-    SELLER: "/seller",
+    SELLER: "/dashboard",
     ADMIN: "/admin",
   }[user?.role];
 

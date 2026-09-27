@@ -18,7 +18,7 @@ export default function SellerPage() {
         return;
       }
 
-      const data = await apiRequest("/auctions/", {
+      const data = await apiRequest("/auctions/?mine=true", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

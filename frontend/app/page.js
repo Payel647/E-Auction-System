@@ -144,33 +144,31 @@ export default function Home() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-            {[
-              ["Collectibles", "Rare and interesting items"],
-              ["Electronics", "Technology and gadgets"],
-              ["Art & Decor", "Unique pieces and artwork"],
-              ["Vehicles", "Cars, bikes and more"],
-            ].map(([title, description]) => (
-              <div
-                key={title}
-                className="rounded-xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-lg">
-                  ◇
-                </div>
-
-                <h3 className="font-semibold text-gray-900">
-                  {title}
-                </h3>
-
-                <p className="mt-2 text-sm leading-6 text-gray-500">
-                  {description}
-                </p>
-              </div>
-            ))}
-
-          </div>
-        </section>
+          {[
+          ["Collectibles", "Rare and interesting items", "/collectibles.jpg"],
+          ["Electronics", "Technology and gadgets", "/electronics.jpg"],
+          ["Art & Decor", "Unique pieces and artwork", "/art-decor.jpg"],
+          ["Vehicles", "Cars, bikes and more", "/vehicles.jpg"],].map(([title, description, image]) => (
+         <div key={title} className="rounded-xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-md">
+         <div className="relative h-72 overflow-hidden rounded-xl bg-gray-200">
+         <Image
+          src={image}
+          alt={title}
+          fill
+          sizes="(max-width: 1024px) 100vw, 25vw"
+          className="object-cover"
+        />
+      </div>
+      <h3 className="mt-4 text-lg font-semibold text-gray-900">
+        {title}
+      </h3>
+      <p className="mt-1 text-sm text-gray-600">
+        {description}
+      </p>
+       </div>
+       ))}
+       </div>
+      </section>
 
         {/* How it works */}
         <section className="border-y border-gray-200 bg-gray-50">
@@ -189,10 +187,9 @@ export default function Home() {
             <div className="grid gap-8 md:grid-cols-3">
 
               <div className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-950 text-sm font-bold text-white">
+                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-950 text-sm font-bold text-white">
                   01
                 </div>
-
                 <h3 className="mt-5 font-semibold">
                   Create an account
                 </h3>

@@ -26,14 +26,12 @@ class AuctionListCreateView(generics.ListCreateAPIView):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        # Seller sees only their own auctions
-        if self.request.user.role == "SELLER":
-            return Auction.objects.filter(
-                seller=self.request.user
-            ).order_by("-created_at")
+        auctions = Auction.objects.all()
 
-        # Buyers/Admins see all auctions
-        return Auction.objects.all().order_by("-created_at")
+        if self.request.query_params.get("mine") == "true":
+            auctions = auctions.filter(seller=self.request.user)
+
+        return auctions.order_by("-created_at")
 
     def perform_create(self, serializer):
         serializer.save(seller=self.request.user)
@@ -156,10 +154,7 @@ class AdminDeleteUserView(APIView):
             {"message": "User deleted successfully."},
             status=status.HTTP_200_OK
         )
-      
-# --------------------------------------------------
 # AUCTION RESULT
-# --------------------------------------------------
 
 class AuctionResultView(APIView):
 
@@ -195,10 +190,7 @@ class AuctionResultView(APIView):
             "end_time": auction.end_time,
         })
 
-
-# --------------------------------------------------
 # PLACE BID
-# --------------------------------------------------
 
 class PlaceBidView(APIView):
 
@@ -206,11 +198,11 @@ class PlaceBidView(APIView):
 
     def post(self, request, id):
 
-        # Only buyers can bid
-        if request.user.role != "BUYER":
+        # Buyers and sellers can bid, but administrators cannot.
+        if request.user.role not in [User.Role.BUYER, User.Role.SELLER]:
             return Response(
                 {
-                    "error": "Only buyers can place bids."
+                    "error": "Only buyers and sellers can place bids."
                 },
                 status=status.HTTP_403_FORBIDDEN
             )
@@ -254,11 +246,17 @@ class PlaceBidView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
+            if auction.seller_id == request.user.id:
+                return Response(
+                    {
+                        "error": "Seller cannot bid on own auction."
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
             now = timezone.now()
 
-            # ------------------------------------------
             # Check auction timing
-            # ------------------------------------------
 
             if now < auction.start_time:
 
@@ -300,21 +298,19 @@ class PlaceBidView(APIView):
                 ]
             )
 
-            # ------------------------------------------
-            # Seller cannot bid on own auction
-            # ------------------------------------------
-
-            if auction.seller_id == request.user.id:
+            highest_bid = auction.bids.order_by(
+                "-amount",
+                "-created_at"
+            ).first()
+            if highest_bid and highest_bid.bidder_id == request.user.id:
                 return Response(
                     {
-                        "error": "Seller cannot bid on own auction."
+                        "error": "You are already the highest bidder."
                     },
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # ------------------------------------------
             # Minimum bid
-            # ------------------------------------------
 
             minimum_bid = max(
                 auction.starting_price,
@@ -331,10 +327,7 @@ class PlaceBidView(APIView):
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-            # ------------------------------------------
             # Create bid
-            # ------------------------------------------
 
             bid = Bid.objects.create(
                 auction=auction,
@@ -357,10 +350,7 @@ class PlaceBidView(APIView):
             status=status.HTTP_201_CREATED
         )
 
-
-# --------------------------------------------------
 # BID HISTORY
-# --------------------------------------------------
 
 class BidHistoryView(generics.ListAPIView):
 
@@ -381,7 +371,7 @@ class MyBidsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.role != User.Role.BUYER:
+        if self.request.user.role not in [User.Role.BUYER, User.Role.SELLER]:
             return Bid.objects.none()
 
         return Bid.objects.filter(
